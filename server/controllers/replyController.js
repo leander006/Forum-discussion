@@ -33,23 +33,22 @@ const createReply = asyncHandler(async(req,res) =>{
 // Create reply's comment //
 const createComment = asyncHandler(async(req,res) =>{
       const reply = await Reply.findById(req.params.id)
-      console.log(reply);
       const {content} = req.body;
-      console.log(content);
+
       if(!content)
       {
           return res.status(401).json("Please enter all  field");
       }   
       try {
-            console.log("Entered try");
+
           const newComment = new Comment({
               username:req.user._id,
               comment:content,
               reply:req.params.id,
           })
-          console.log("mid try");
+ 
           const newcomment = await newComment.save();
-          console.log(newcomment);
+
 
           await reply.updateOne({$push:{comments:newcomment._id}})
           res.status(200).json("Comment added successfully ");

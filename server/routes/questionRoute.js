@@ -1,15 +1,17 @@
 const express = require('express');
-const { createQuestion, getQuestion, particularQuestion, deleteQuestion, searchQuestion} = require('../controllers/questionController');
+const { createQuestion, getQuestion, particularQuestion, deleteQuestion, searchQuestion, trendQuestions, answer,unanswer} = require('../controllers/questionController');
 const { protect } = require('../middleware/authMiddleware');
 const router = express.Router();
-const {like,unLike} = require("../controllers/mediaController")
+
 
 router.post("/",protect,createQuestion)
-router.get("/",protect,getQuestion)
+router.get("/",getQuestion)
+router.get("/answer/",answer)
+router.get("/unanswer/",unanswer)
 router.get("/search",protect,searchQuestion)
-router.get("/:id",protect,particularQuestion)
+router.get("/particular/:id",particularQuestion)
 router.delete("/delete/:id",protect,deleteQuestion)
-
+router.get("/trending",trendQuestions)
 
 
 

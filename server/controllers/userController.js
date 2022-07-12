@@ -26,7 +26,7 @@ const allUser = asyncHandler(async(req,res) =>{
       try {
        
           
-           const allUsers = await User.find({_id:{$ne:req.user._id}})
+           const allUsers = await User.find({})
 
          
 

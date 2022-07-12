@@ -7,7 +7,6 @@ const User = require('../model/User');
 
 // create question //
 const createQuestion = asyncHandler(async(req,res) =>{
-
       const {content} = req.body;
   
       if(!content)
@@ -23,7 +22,7 @@ const createQuestion = asyncHandler(async(req,res) =>{
           const question = await newQuestion.save();
           res.status(200).json(question);
       } catch (error) {
-          res.status(500).json({error:error.message});
+          res.status(500).json({error:"First login"});
              
       }
   
@@ -31,7 +30,12 @@ const createQuestion = asyncHandler(async(req,res) =>{
  // particular question //
 const particularQuestion = asyncHandler(async(req,res) =>{
     try {
-        const question = await Question.findById(req.params.id).populate("owner").populate({path:"reply",populate:{path:"username"}}).populate({path:"reply",populate:{path:"comments"}})
+        const question = await Question.findById(req.params.id).populate("owner").populate({ 
+            path: 'reply',
+            populate: {
+              path: 'comments',
+            } 
+         }).populate({path:"reply",populate:{path:"username"}}).populate({path:"reply",populate:{path:"comments",populate:{path:"reply"}}}).populate({path:"reply",populate:{path:"comments",populate:{path:"username"}}}).populate({path:"reply",populate:{path:"likes"}})
         const count = question.count
         await question.update({ $inc: { count:1 }})
         res.status(200).json(question)
@@ -46,8 +50,13 @@ const searchQuestion = asyncHandler(async(req,res) =>{
     const {name} = req.query
     try {
           const keyword = req.query.name
-          const question = await Question.find({content:{$regex:keyword ,$options:'$i'}}).populate("owner").populate({path:"reply",populate:{path:"username"}}).populate({path:"reply",populate:{path:"comments"}})
-          return res.status(200).json(question);
+          const question = await Question.find({content:{$regex:keyword ,$options:'$i'}}).populate("owner").populate({ 
+            path: 'reply',
+            populate: {
+              path: 'comments',
+            } 
+         }).populate({path:"reply",populate:{path:"username"}}).populate({path:"reply",populate:{path:"comments",populate:{path:"reply"}}}).populate({path:"reply",populate:{path:"comments",populate:{path:"username"}}}).populate({path:"reply",populate:{path:"likes"}})
+         return res.status(200).json(question)
 
      } catch (error) {
            return res.status(404).json({error:error.message})
@@ -60,10 +69,9 @@ const getQuestion = asyncHandler(async(req,res) =>{
             const question = await Question.find({}).populate("owner").populate({ 
                 path: 'reply',
                 populate: {
-                  path: 'username',
-                  model: 'Reply'
+                  path: 'comments',
                 } 
-             }).populate({path:"reply",populate:{path:"username"}}).populate({path:"reply",populate:{path:"comments"}}).populate({path:"reply",populate:{path:"likes"}}).sort({createdAt:-1})
+             }).populate({path:"reply",populate:{path:"username"}}).populate({path:"reply",populate:{path:"comments",populate:{path:"reply"}}}).populate({path:"reply",populate:{path:"comments",populate:{path:"username"}}}).populate({path:"reply",populate:{path:"likes"}}).sort({createdAt:-1})
             res.status(200).json(question)
       } catch (error) {
             res.status(404).send({error:error.message})
@@ -93,12 +101,51 @@ const deleteQuestion = asyncHandler(async(req,res) =>{
     }
 })
 
+//Trending question //
 
+const trendQuestions = asyncHandler(async(req,res) =>{
+    try {
+          const question = await Question.find({}).populate("owner").populate({ 
+              path: 'reply',
+              populate: {
+                path: 'comments',
+              } 
+           }).populate({path:"reply",populate:{path:"username"}}).populate({path:"reply",populate:{path:"comments",populate:{path:"reply"}}}).populate({path:"reply",populate:{path:"comments",populate:{path:"username"}}}).populate({path:"reply",populate:{path:"likes"}}).sort({count:-1}).limit(6)
+          res.status(200).json(question)
+    } catch (error) {
+          res.status(404).send({error:error.message})
+    }
+
+})
+// Stacts//
+
+const answer = asyncHandler(async(req,res) =>{
+    try {
+          const question = await Question.find({ reply: { $exists: true, $ne: [] } })
+          res.status(200).json(question.length)
+    } catch (error) {
+          res.status(404).send({error:error.message})
+    }
+
+})
+
+const unanswer = asyncHandler(async(req,res) =>{
+    try {
+          const question = await Question.find({ reply: { $exists: true, $eq: [] } })
+          res.status(200).json(question.length)
+    } catch (error) {
+          res.status(404).send({error:error.message})
+    }
+
+})
 
 module.exports = {
 	createQuestion,
     getQuestion,
     particularQuestion,
     deleteQuestion,
-    searchQuestion
+    searchQuestion,
+    trendQuestions,
+    answer,
+    unanswer
 };
